@@ -17,10 +17,17 @@ class Books(Resource):
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 5, type=int)
 
-        # Use SQLAlchemy paginate
+        # Sanitize inputs
+        if page < 1:
+            page = 1
+        if per_page < 1:
+            per_page = 5
+        if per_page > 100:  # safety limit
+            per_page = 100
+
+        # Paginate query
         pagination = Book.query.paginate(page=page, per_page=per_page, error_out=False)
 
-        # Serialize the books on this page
         items = [BookSchema().dump(book) for book in pagination.items]
 
         return {
@@ -28,9 +35,10 @@ class Books(Resource):
             "per_page": per_page,
             "total": pagination.total,
             "total_pages": pagination.pages,
-            "items": items
+            "items": items,
+            "has_next": pagination.has_next,
+            "has_prev": pagination.has_prev
         }, 200
-
 
 api.add_resource(Books, '/books', endpoint='books')
 
