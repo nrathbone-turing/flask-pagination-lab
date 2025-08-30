@@ -17,13 +17,18 @@ class Books(Resource):
         page = request.args.get("page", 1, type=int)
         per_page = request.args.get("per_page", 5, type=int)
 
-        # For now, just return dummy structure to match test expectations
+        # Use SQLAlchemy paginate
+        pagination = Book.query.paginate(page=page, per_page=per_page, error_out=False)
+
+        # Serialize the books on this page
+        items = [BookSchema().dump(book) for book in pagination.items]
+
         return {
             "page": page,
             "per_page": per_page,
-            "total": Book.query.count(),
-            "total_pages": 0,   # placeholder
-            "items": []         # placeholder
+            "total": pagination.total,
+            "total_pages": pagination.pages,
+            "items": items
         }, 200
 
 
